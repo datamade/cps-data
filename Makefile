@@ -48,3 +48,13 @@ cps_campus : CPS_Schools_2013-2014_Academic_Year.csv
                                  governance TEXT)" \
 	&& csvcut -c "SchoolID","SchoolName","FullName","Governance" $< | \
            psql -d $(PG_DB) -c "COPY $@ FROM STDIN WITH CSV HEADER")
+
+
+CPS_High_School_Attendance_1617.zip :
+	wget -O $@ "https://data.cityofchicago.org/api/geospatial/bwum-4mhg?method=export&format=Original"
+
+CPS_High_School_Attendance_1617.shp : CPS_High_School_Attendance_1617.zip
+	unzip $<
+
+school_boundaries : CPS_High_School_Attendance_1617.shp
+	ogr2ogr -f "PostgreSQL" PG:dbname=$(PG_DB) -t_srs EPSG:4326 -nlt PROMOTE_TO_MULTI -nln $@ $<
